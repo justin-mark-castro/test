@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root { color-scheme: light; padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Sapporo February Trip</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column built for a phone. A sticky three-way switch (Plan, Spend, Split) sits under a short header; each view is a stack of day cards or ledger rows. */
+:root {
+  --bg: #f3f6f9;
+  --surface: #ffffff;
+  --surface-2: #e9eff5;
+  --fg: #101e2c;
+  --muted: #566879;
+  --line: #d5dee7;
+  --accent: #1d5cbf;
+  --on-accent: #ffffff;
+  --warn: #b03c1c;
+  --good: #1f7a4d;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1721;
+    --surface: #152230;
+    --surface-2: #1d2e3f;
+    --fg: #e7eef5;
+    --muted: #9bb0c2;
+    --line: #28394a;
+    --accent: #7fb1ff;
+    --on-accent: #0b1622;
+    --warn: #ff9f80;
+    --good: #6fd3a2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1721;
+  --surface: #152230;
+  --surface-2: #1d2e3f;
+  --fg: #e7eef5;
+  --muted: #9bb0c2;
+  --line: #28394a;
+  --accent: #7fb1ff;
+  --on-accent: #0b1622;
+  --warn: #ff9f80;
+  --good: #6fd3a2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 15px/1.5 var(--body);
+  padding-block: 0 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bg);
+  z-index: 10;
+}
+.wrap { max-width: 640px; margin: 0 auto; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* header */
+header { padding-top: 28px; }
+.eyebrow { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+.eyebrow svg { width: 18px; height: 18px; color: var(--accent); flex: none; }
+h1 { font: 700 clamp(32px, 9vw, 44px)/1.05 var(--display); letter-spacing: -.02em; margin: 10px 0 6px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.stat b { display: block; font: 700 18px/1.2 var(--display); overflow-wrap: anywhere; }
+.stat span { font-size: 12px; color: var(--muted); }
+
+details.settings { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+details.settings summary { padding: 12px 14px; font-weight: 600; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 0 14px 14px; }
+.settings-grid .full { grid-column: 1 / -1; }
+
+label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 500; min-width: 0; }
+input, select {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-height: 44px;
+  font-size: 16px;
+  width: 100%;
+  min-width: 0;
+}
+input[type="checkbox"] { width: 24px; height: 24px; min-height: 0; padding: 0; accent-color: var(--accent); flex: none; }
+
+/* tabs */
+.tabs {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--bg);
+  padding: 14px 0 10px;
+}
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; border-radius: 9px; min-height: 42px; font-weight: 600; color: var(--muted); }
+.seg button[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+
+/* shared */
+section.view { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+h2 { font: 700 20px/1.2 var(--display); margin: 0; letter-spacing: -.01em; }
+h3 { font: 600 13px/1.2 var(--body); margin: 0; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 0 14px; min-height: 44px; font-weight: 600; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.small { min-height: 36px; padding: 0 10px; font-size: 13px; }
+.btn[disabled] { opacity: .55; cursor: default; }
+.note { color: var(--muted); font-size: 13px; margin: 0; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+
+/* plan */
+.day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 14px 14px 4px; flex-wrap: wrap; }
+.day-head .theme { color: var(--muted); font-size: 13px; }
+.stop { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: start; }
+.stop:first-of-type { border-top: 0; }
+.stop .time { font-size: 12px; color: var(--muted); font-weight: 600; }
+.stop .title { font-weight: 600; overflow-wrap: anywhere; }
+.stop.done .title { text-decoration: line-through; color: var(--muted); }
+.stop .desc { color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
+.stop .row { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.packing { padding: 14px; }
+.packing ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.packing li { margin: 4px 0; }
+
+/* spend */
+form.add { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 14px; }
+form.add .full { grid-column: 1 / -1; }
+.amt-row { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 8px; }
+.err { color: var(--warn); font-size: 13px; min-height: 18px; margin: 0; }
+.ledger { list-style: none; margin: 0; padding: 0; }
+.ledger li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; }
+.ledger li:first-child { border-top: 0; }
+.ledger .d { font-weight: 600; overflow-wrap: anywhere; }
+.ledger .m { color: var(--muted); font-size: 12px; grid-column: 1; }
+.ledger .a { text-align: right; font-weight: 600; grid-column: 2; grid-row: 1; }
+.ledger .a small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+.ledger .x { grid-column: 2; grid-row: 2; justify-self: end; background: none; border: 0; color: var(--muted); font-size: 12px; min-height: 32px; padding: 0 4px; text-decoration: underline; }
+.empty { padding: 22px 14px; color: var(--muted); text-align: center; }
+
+/* split */
+.block { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.bar { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .25s; }
+.bar.over > i { background: var(--warn); }
+.cat { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; }
+.cat .bar { height: 8px; }
+.pay { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.pay:first-of-type { border-top: 0; }
+.settle { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; font-weight: 600; }
+.good { color: var(--good); }
+.bad { color: var(--warn); }
+
+#toast { position: fixed; left: 0; right: 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); z-index: 20; pointer-events: none; }
+#toast > div { pointer-events: auto; background: var(--fg); color: var(--bg); border-radius: 10px; padding: 8px 8px 8px 14px; display: flex; gap: 12px; align-items: center; font-size: 14px; }
+#toast button { background: transparent; border: 1px solid currentColor; color: inherit; border-radius: 7px; min-height: 32px; padding: 0 10px; font-weight: 600; }
+
+@media (max-width: 380px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stats .stat:last-child { grid-column: 1 / -1; }
+  .cat { grid-template-columns: 74px minmax(0, 1fr) auto; }
+}
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5"/></svg>
+      <span>Hokkaido &middot; <span id="range">February</span></span>
+    </div>
+    <h1>Sapporo in February</h1>
+    <p class="sub">Five days of snow, seafood and ramen. Plan the days, log what you spend, then settle up.</p>
+
+    <div class="stats">
+      <div class="stat"><b id="st-days" class="num">5</b><span>days</span></div>
+      <div class="stat"><b id="st-spent" class="num">¥0</b><span>spent</span></div>
+      <div class="stat"><b id="st-left" class="num">¥0</b><span id="st-left-l">left in budget</span></div>
+    </div>
+
+    <details class="settings">
+      <summary>Trip settings</summary>
+      <div class="settings-grid">
+        <label class="f" for="s-start">First day
+          <input id="s-start" type="date">
+        </label>
+        <label class="f" for="s-rate">Yen per S$1
+          <input id="s-rate" type="number" inputmode="decimal" min="1" step="0.1">
+        </label>
+        <label class="f full" for="s-names">Travellers (comma separated, up to 6)
+          <input id="s-names" type="text" autocomplete="off">
+        </label>
+        <label class="f full" for="s-budget">Total budget (¥)
+          <input id="s-budget" type="number" inputmode="numeric" min="0" step="1000">
+        </label>
+        <p class="note full">Entries save in this browser only. Anyone you share the link with starts with their own copy of this sample.</p>
+      </div>
+    </details>
+  </header>
+
+  <nav class="tabs" aria-label="Sections">
+    <div class="seg" role="tablist">
+      <button type="button" role="tab" id="tab-plan" data-view="plan" aria-selected="true">Plan</button>
+      <button type="button" role="tab" id="tab-spend" data-view="spend" aria-selected="false">Spend</button>
+      <button type="button" role="tab" id="tab-split" data-view="split" aria-selected="false">Split</button>
+    </div>
+  </nav>
+
+  <main>
+    <section class="view" id="view-plan" aria-labelledby="tab-plan"></section>
+
+    <section class="view" id="view-spend" aria-labelledby="tab-spend" hidden>
+      <form class="card add" id="add-form" novalidate>
+        <div class="full"><h2>Add an expense</h2></div>
+        <label class="f full" for="f-desc">What was it
+          <input id="f-desc" type="text" autocomplete="off" placeholder="Soup curry lunch">
+        </label>
+        <div class="full">
+          <label class="f" for="f-amt">Amount
+            <span class="amt-row">
+              <input id="f-amt" type="number" inputmode="decimal" min="0" step="any" placeholder="1800">
+              <select id="f-cur" aria-label="Currency"><option value="JPY">¥ JPY</option><option value="SGD">S$ SGD</option></select>
+            </span>
+          </label>
+        </div>
+        <label class="f" for="f-cat">Category
+          <select id="f-cat"></select>
+        </label>
+        <label class="f" for="f-day">Day
+          <select id="f-day"></select>
+        </label>
+        <label class="f full" for="f-payer">Paid by
+          <select id="f-payer"></select>
+        </label>
+        <p class="err full" id="f-err" role="alert"></p>
+        <button class="btn primary full" type="submit">Add expense</button>
+      </form>
+
+      <div class="card" id="ledger-card"></div>
+      <div><button type="button" class="btn small" id="clear-samples" hidden>Remove sample entries</button></div>
+    </section>
+
+    <section class="view" id="view-split" aria-labelledby="tab-split" hidden></section>
+  </main>
+</div>
+<div id="toast" aria-live="polite"></div>
+
+<script>
+(function () {
+  var KEY = "sapporo-trip-v1";
+  var CATS = ["Flights", "Stay", "Food", "Transport", "Activities", "Shopping", "Other"];
+  var VIEWS = ["plan", "spend", "split"];
+
+  // Sample itinerary. Fares and prices are rough estimates in yen; check before you go.
+  var DAYS = [
+    { theme: "Arrive and settle in", stops: [
+      { id: "d1a", time: "Afternoon", title: "Land at New Chitose Airport", note: "Pick up any pocket Wi-Fi or eSIM first, then head for the train.", est: 0, cat: "Transport" },
+      { id: "d1b", time: "Afternoon", title: "JR Rapid Airport to Sapporo Station", note: "Around 40 minutes. Trains run every 10 to 15 minutes.", est: 1150, cat: "Transport" },
+      { id: "d1c", time: "Evening", title: "Check in near Odori Park", note: "Staying close to Odori or Susukino keeps the festival a short walk away.", est: 0, cat: "Stay" },
+      { id: "d1d", time: "Dinner", title: "Soup curry", note: "A Sapporo specialty: spiced broth, chicken leg and winter vegetables.", est: 1800, cat: "Food" },
+      { id: "d1e", time: "Night", title: "Walk Odori Park after dark", note: "Easy first look at the lights without any crowds.", est: 0, cat: "Activities" }
+    ]},
+    { theme: "Snow festival day", stops: [
+      { id: "d2a", time: "Morning", title: "Odori Park snow sculptures", note: "Check the official festival dates before you lock in this day.", est: 0, cat: "Activities" },
+      { id: "d2b", time: "Lunch", title: "Scallop and crab rice bowl", note: "Hokkaido seafood is best in winter.", est: 2800, cat: "Food" },
+      { id: "d2c", time: "Afternoon", title: "Sapporo Clock Tower and Tanukikoji arcade", note: "Covered shopping street, good for a warm-up stop.", est: 0, cat: "Activities" },
+      { id: "d2d", time: "Evening", title: "Susukino ice sculptures", note: "Lit up at night. Wear grippy boots.", est: 0, cat: "Activities" },
+      { id: "d2e", time: "Dinner", title: "Jingisukan (grilled lamb)", note: "Book ahead on festival nights.", est: 3800, cat: "Food" }
+    ]},
+    { theme: "Day trip to Otaru", stops: [
+      { id: "d3a", time: "Morning", title: "JR Rapid to Otaru", note: "About 35 minutes each way along the coast. Sit on the sea side.", est: 1500, cat: "Transport" },
+      { id: "d3b", time: "Late morning", title: "Otaru Canal and Sakaimachi street", note: "Glass shops, music box store and sweets.", est: 0, cat: "Activities" },
+      { id: "d3c", time: "Lunch", title: "Sushi lunch", note: "Otaru is known for its sushi street.", est: 4500, cat: "Food" },
+      { id: "d3d", time: "Evening", title: "Otaru Snow Light Path", note: "Candle-lit paths along the canal, held in February. Check dates.", est: 0, cat: "Activities" },
+      { id: "d3e", time: "Night", title: "Train back to Sapporo", note: "Last trains run late, but confirm the time.", est: 0, cat: "Transport" }
+    ]},
+    { theme: "Markets, beer and a night view", stops: [
+      { id: "d4a", time: "Breakfast", title: "Nijo Market seafood breakfast", note: "Go early. Sea urchin and salmon roe bowls.", est: 3200, cat: "Food" },
+      { id: "d4b", time: "Late morning", title: "Sapporo Beer Museum", note: "Entry is free. The tasting set costs extra.", est: 800, cat: "Activities" },
+      { id: "d4c", time: "Afternoon", title: "Coffee and sweets break", note: "Rest the legs before the evening.", est: 1200, cat: "Food" },
+      { id: "d4d", time: "Evening", title: "Mt. Moiwa ropeway night view", note: "Check that it is running in snow. Dress warmly.", est: 2100, cat: "Activities" },
+      { id: "d4e", time: "Dinner", title: "Miso ramen", note: "Ramen Alley near Susukino has many small shops.", est: 1300, cat: "Food" }
+    ]},
+    { theme: "Last bites and fly home", stops: [
+      { id: "d5a", time: "Morning", title: "Gifts at Stellar Place or the airport", note: "Chocolates, butter sweets and dairy treats.", est: 4000, cat: "Shopping" },
+      { id: "d5b", time: "Midday", title: "JR Rapid to New Chitose Airport", note: "Leave at least three hours before the flight in snow season.", est: 1150, cat: "Transport" },
+      { id: "d5c", time: "Afternoon", title: "Fly home", note: "Check for de-icing delays.", est: 0, cat: "Transport" }
+    ]}
+  ];
+
+  var PACKING = ["Waterproof boots with deep grip", "Heat-tech base layers and a windproof coat", "Gloves, hat and a scarf", "Heat packs for pockets", "Power bank, since cold drains batteries", "Lip balm and moisturiser for dry air"];
+
+  function sampleExpenses() {
+    return [
+      { id: "x1", desc: "Return flights", amt: 1900, cur: "SGD", cat: "Flights", day: -1, payer: 0, sample: true },
+      { id: "x2", desc: "Hotel, 4 nights", amt: 112000, cur: "JPY", cat: "Stay", day: 0, payer: 1, sample: true },
+      { id: "x3", desc: "Soup curry dinner", amt: 3600, cur: "JPY", cat: "Food", day: 0, payer: 0, sample: true },
+      { id: "x4", desc: "Otaru sushi lunch", amt: 9200, cur: "JPY", cat: "Food", day: 2, payer: 1, sample: true }
+    ];
+  }
+
+  function defaults() {
+    return {
+      settings: { start: "2027-02-05", names: ["Me", "Friend"], rate: 115, budget: 450000 },
+      expenses: sampleExpenses(),
+      done: {}
+    };
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && s.settings && s.expenses) { if (!s.done) s.done = {}; return s; }
+      }
+    } catch (e) {}
+    return defaults();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var state = load();
+  var view = "plan";
+  var lastRemoved = null;
+  var toastTimer = null;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function commas(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  function yen(n) { return (n < 0 ? "-" : "") + "¥" + commas(Math.abs(n)); }
+  function sgd(jpy) { var r = state.settings.rate || 115; return "S$" + commas(jpy / r); }
+  function names() { var n = state.settings.names; return n && n.length ? n : ["Me"]; }
+  function payerName(p) { var n = names(); return typeof p === "number" && n[p] ? n[p] : n[0]; }
+  function toJPY(e) { return e.cur === "SGD" ? e.amt * (state.settings.rate || 115) : e.amt; }
+  function total() { return state.expenses.reduce(function (s, e) { return s + toJPY(e); }, 0); }
+
+  function dayLabel(i) {
+    var d = new Date(state.settings.start + "T00:00:00Z");
+    if (isNaN(d.getTime())) return "Day " + (i + 1);
+    d.setUTCDate(d.getUTCDate() + i);
+    return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  }
+  function dayName(i) { return i < 0 ? "Before trip" : "Day " + (i + 1) + " · " + dayLabel(i); }
+
+  /* ---------- header ---------- */
+  function renderHeader() {
+    var t = total(), b = state.settings.budget || 0;
+    $("st-spent").textContent = yen(t);
+    var left = b - t;
+    $("st-left").textContent = yen(left);
+    $("st-left").className = "num" + (left < 0 ? " bad" : "");
+    $("st-left-l").textContent = left < 0 ? "over budget" : "left in budget";
+    $("range").textContent = dayLabel(0) + " to " + dayLabel(DAYS.length - 1);
+    $("st-days").textContent = DAYS.length;
+  }
+
+  function renderSettings() {
+    var s = state.settings;
+    $("s-start").value = s.start;
+    $("s-rate").value = s.rate;
+    $("s-names").value = s.names.join(", ");
+    $("s-budget").value = s.budget;
+  }
+
+  function fillSelects() {
+    var cat = $("f-cat"), day = $("f-day"), payer = $("f-payer");
+    var cv = cat.value, dv = day.value, pv = payer.value;
+    cat.innerHTML = CATS.map(function (c) { return '<option value="' + c + '">' + c + "</option>"; }).join("");
+    var dayOpts = '<option value="-1">Before trip</option>';
+    DAYS.forEach(function (d, i) { dayOpts += '<option value="' + i + '">' + esc(dayName(i)) + "</option>"; });
+    day.innerHTML = dayOpts;
+    payer.innerHTML = names().map(function (n, i) { return '<option value="' + i + '">' + esc(n) + "</option>"; }).join("");
+    if (cv) cat.value = cv; else cat.value = "Food";
+    if (dv) day.value = dv; else day.value = "0";
+    if (pv && payer.querySelector('option[value="' + pv + '"]')) payer.value = pv;
+  }
+
+  /* ---------- plan ---------- */
+  function renderPlan() {
+    var html = "";
+    DAYS.forEach(function (d, i) {
+      var doneCount = d.stops.filter(function (s) { return state.done[s.id]; }).length;
+      html += '<article class="card"><div class="day-head"><h2>Day ' + (i + 1) + " &middot; " + esc(dayLabel(i)) + '</h2><span class="theme">' + esc(d.theme) + " &middot; " + doneCount + "/" + d.stops.length + ' done</span></div>';
+      d.stops.forEach(function (s) {
+        var isDone = !!state.done[s.id];
+        var added = state.expenses.some(function (e) { return e.stop === s.id; });
+        html += '<div class="stop' + (isDone ? " done" : "") + '">' +
+          '<input type="checkbox" id="c-' + s.id + '" data-check="' + s.id + '"' + (isDone ? " checked" : "") + ' aria-label="Mark done: ' + esc(s.title) + '">' +
+          "<div><div class=\"time\">" + esc(s.time) + '</div><label class="title" for="c-' + s.id + '">' + esc(s.title) + '</label><div class="desc">' + esc(s.note) + "</div>";
+        if (s.est > 0) {
+          html += '<div class="row"><span class="pill num">est ' + yen(s.est) + "</span>" +
+            '<button type="button" class="btn small" data-add-stop="' + s.id + '" data-day="' + i + '"' + (added ? " disabled" : "") + ">" + (added ? "Added to spend" : "Add to spend") + "</button></div>";
+        }
+        html += "</div></div>";
+      });
+      html += "</article>";
+    });
+    html += '<article class="card packing"><h2>Winter packing</h2><ul>' + PACKING.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul></article>";
+    $("view-plan").innerHTML = html;
+  }
+
+  /* ---------- spend ---------- */
+  function renderSpend() {
+    var list = state.expenses.slice().sort(function (a, b) { return a.day - b.day; });
+    var card = $("ledger-card");
+    if (!list.length) {
+      card.innerHTML = '<div class="empty">No expenses yet. Add the first one above, or use "Add to spend" on a stop in the plan.</div>';
+    } else {
+      card.innerHTML = '<ul class="ledger">' + list.map(function (e) {
+        var j = toJPY(e);
+        var orig = e.cur === "SGD" ? "<small>S$" + commas(e.amt) + "</small>" : "<small>about " + sgd(j) + "</small>";
+        return "<li><span class=\"d\">" + esc(e.desc) + (e.sample ? ' <span class="pill">sample</span>' : "") + '</span><span class="a num">' + yen(j) + orig + "</span>" +
+          '<span class="m">' + esc(e.cat) + " &middot; " + esc(dayName(e.day)) + " &middot; " + esc(payerName(e.payer)) + "</span>" +
+          '<button type="button" class="x" data-del="' + esc(e.id) + '" aria-label="Remove ' + esc(e.desc) + '">Remove</button></li>';
+      }).join("") + "</ul>";
+    }
+    $("clear-samples").hidden = !state.expenses.some(function (e) { return e.sample; });
+  }
+
+  /* ---------- split ---------- */
+  function renderSplit() {
+    var t = total(), b = state.settings.budget || 0, n = names().length;
+    var pct = b > 0 ? Math.min(100, (t / b) * 100) : 0;
+    var html = '<div class="card block"><h3>Budget</h3><div><b class="num" style="font:700 26px/1.1 var(--display)">' + yen(t) + '</b> <span class="note">of ' + yen(b) + " &middot; about " + sgd(t) + "</span></div>" +
+      '<div class="bar' + (t > b ? " over" : "") + '"><i style="width:' + pct.toFixed(1) + '%"></i></div></div>';
+
+    var byCat = {};
+    state.expenses.forEach(function (e) { byCat[e.cat] = (byCat[e.cat] || 0) + toJPY(e); });
+    var cats = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; });
+    html += '<div class="card block"><h3>By category</h3>';
+    if (!cats.length) html += '<p class="note">Nothing logged yet.</p>';
+    cats.forEach(function (c) {
+      var w = t > 0 ? (byCat[c] / t) * 100 : 0;
+      html += '<div class="cat"><span>' + esc(c) + '</span><div class="bar"><i style="width:' + w.toFixed(1) + '%"></i></div><span class="num">' + yen(byCat[c]) + "</span></div>";
+    });
+    html += "</div>";
+
+    var paid = names().map(function () { return 0; });
+    state.expenses.forEach(function (e) {
+      var idx = (typeof e.payer === "number" && e.payer < n) ? e.payer : 0;
+      paid[idx] += toJPY(e);
+    });
+    var share = t / n;
+    html += '<div class="card block"><h3>Who paid</h3><div>';
+    names().forEach(function (nm, i) {
+      var bal = paid[i] - share;
+      html += '<div class="pay"><span><b>' + esc(nm) + '</b> <span class="note">paid ' + yen(paid[i]) + '</span></span><span class="num ' + (bal >= 0 ? "good" : "bad") + '">' + (bal >= 0 ? "is owed " : "owes ") + yen(Math.abs(bal)) + "</span></div>";
+    });
+    html += "</div>";
+    var bals = names().map(function (nm, i) { return { name: nm, bal: paid[i] - share }; });
+    var debtors = bals.filter(function (x) { return x.bal < -1; }).sort(function (a, b) { return a.bal - b.bal; });
+    var creditors = bals.filter(function (x) { return x.bal > 1; }).sort(function (a, b) { return b.bal - a.bal; });
+    var lines = [], di = 0, ci = 0;
+    while (di < debtors.length && ci < creditors.length) {
+      var amt = Math.min(-debtors[di].bal, creditors[ci].bal);
+      lines.push(esc(debtors[di].name) + " pays " + esc(creditors[ci].name) + " " + yen(amt) + " (about " + sgd(amt) + ")");
+      debtors[di].bal += amt; creditors[ci].bal -= amt;
+      if (debtors[di].bal > -1) di++;
+      if (creditors[ci].bal < 1) ci++;
+    }
+    html += '<div class="settle">' + (lines.length ? lines.join("<br>") : (t > 0 ? "Everyone is square." : "Log some expenses to see who owes whom.")) + "</div>";
+    html += '<p class="note">Costs are split equally across ' + n + (n === 1 ? " traveller." : " travellers.") + " SGD entries convert at ¥" + (state.settings.rate || 115) + " per S$1.</p></div>";
+    $("view-split").innerHTML = html;
+  }
+
+  /* ---------- routing ---------- */
+  function setView(v, updateHash) {
+    if (VIEWS.indexOf(v) < 0) v = "plan";
+    view = v;
+    VIEWS.forEach(function (name) {
+      $("view-" + name).hidden = name !== v;
+      $("tab-" + name).setAttribute("aria-selected", name === v ? "true" : "false");
+    });
+    if (v === "split") renderSplit();
+    if (updateHash) { try { if (location.hash !== "#" + v) location.hash = v; } catch (e) {} }
+  }
+
+  function renderAll() {
+    renderHeader();
+    renderPlan();
+    renderSpend();
+    if (view === "split") renderSplit();
+    fillSelects();
+  }
+
+  /* ---------- toast ---------- */
+  function showToast(msg, undo) {
+    var t = $("toast");
+    t.innerHTML = "<div><span>" + esc(msg) + "</span>" + (undo ? '<button type="button" id="toast-undo">Undo</button>' : "") + "</div>";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.innerHTML = ""; lastRemoved = null; }, 5000);
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener("click", function (ev) {
+    var el = ev.target.closest ? ev.target.closest("button") : null;
+    if (!el) return;
+    if (el.hasAttribute("data-view")) { setView(el.getAttribute("data-view"), true); return; }
+    if (el.hasAttribute("data-add-stop")) {
+      var id = el.getAttribute("data-add-stop"), dayIdx = parseInt(el.getAttribute("data-day"), 10);
+      var stop = null;
+      DAYS.forEach(function (d) { d.stops.forEach(function (s) { if (s.id === id) stop = s; }); });
+      if (stop && !state.expenses.some(function (e) { return e.stop === id; })) {
+        state.expenses.push({ id: "e" + Date.now(), desc: stop.title, amt: stop.est, cur: "JPY", cat: stop.cat, day: dayIdx, payer: 0, stop: id });
+        save(); renderAll(); showToast("Added " + yen(stop.est) + " to spend");
+      }
+      return;
+    }
+    if (el.hasAttribute("data-del")) {
+      var did = el.getAttribute("data-del");
+      var idx = state.expenses.findIndex(function (e) { return e.id === did; });
+      if (idx >= 0) {
+        lastRemoved = { item: state.expenses[idx], idx: idx };
+        state.expenses.splice(idx, 1);
+        save(); renderAll(); showToast("Expense removed", true);
+      }
+      return;
+    }
+    if (el.id === "toast-undo" && lastRemoved) {
+      state.expenses.splice(Math.min(lastRemoved.idx, state.expenses.length), 0, lastRemoved.item);
+      lastRemoved = null; save(); renderAll(); $("toast").innerHTML = "";
+      return;
+    }
+    if (el.id === "clear-samples") {
+      state.expenses = state.expenses.filter(function (e) { return !e.sample; });
+      save(); renderAll(); showToast("Sample entries removed");
+    }
+  });
+
+  document.addEventListener("change", function (ev) {
+    var t = ev.target;
+    if (t.hasAttribute && t.hasAttribute("data-check")) {
+      var id = t.getAttribute("data-check");
+      if (t.checked) state.done[id] = true; else delete state.done[id];
+      save(); renderPlan(); return;
+    }
+    if (t.id === "s-start") { if (t.value) { state.settings.start = t.value; save(); renderAll(); } return; }
+    if (t.id === "s-rate") { var r = parseFloat(t.value); if (r > 0) { state.settings.rate = r; save(); renderAll(); } else { t.value = state.settings.rate; } return; }
+    if (t.id === "s-budget") { var b = parseFloat(t.value); state.settings.budget = b > 0 ? b : 0; save(); renderAll(); return; }
+    if (t.id === "s-names") {
+      var list = t.value.split(",").map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 6);
+      if (!list.length) list = ["Me"];
+      state.settings.names = list; t.value = list.join(", ");
+      save(); renderAll(); return;
+    }
+  });
+
+  $("add-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var desc = $("f-desc").value.trim();
+    var amt = parseFloat($("f-amt").value);
+    var err = $("f-err");
+    if (!desc) { err.textContent = "Enter what the expense was for."; $("f-desc").focus(); return; }
+    if (!(amt > 0)) { err.textContent = "Enter an amount greater than zero."; $("f-amt").focus(); return; }
+    err.textContent = "";
+    state.expenses.push({
+      id: "e" + Date.now(), desc: desc, amt: amt, cur: $("f-cur").value, cat: $("f-cat").value,
+      day: parseInt($("f-day").value, 10), payer: parseInt($("f-payer").value, 10) || 0
+    });
+    save();
+    $("f-desc").value = ""; $("f-amt").value = "";
+    renderAll();
+    showToast("Expense added");
+  });
+
+  window.addEventListener("hashchange", function () { setView(location.hash.slice(1), false); });
+
+  renderSettings();
+  renderAll();
+  setView(location.hash.slice(1) || "plan", false);
+})();
+</script>
+</body>
+</html>
